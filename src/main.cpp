@@ -28,11 +28,12 @@ std::string hasData(std::string s) {
   return "";
 }
 
-int main()
-{
+int main(){
   uWS::Hub h;
-
-  PID pid;
+  double Kp_init=1;
+  double Ki_init=1;
+  double Kd_init=1;
+  PID pid(Kp_init, Ki_init, Kd_init);
   // TODO: Initialize the pid variable.
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -50,14 +51,13 @@ int main()
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
-          double steer_value;
+          double steer_value = pid.UpdateSteering(cte)
           /*
           * TODO: Calcuate steering value here, remember the steering value is
           * [-1, 1].
           * NOTE: Feel free to play around with the throttle and speed. Maybe use
           * another PID controller to control the speed!
           */
-          
           // DEBUG
           std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
@@ -80,12 +80,9 @@ int main()
   // doesn't compile :-(
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
-    if (req.getUrl().valueLength == 1)
-    {
+    if (req.getUrl().valueLength == 1) {
       res->end(s.data(), s.length());
-    }
-    else
-    {
+    } else {
       // i guess this should be done more gracefully?
       res->end(nullptr, 0);
     }
@@ -101,12 +98,9 @@ int main()
   });
 
   int port = 4567;
-  if (h.listen(port))
-  {
+  if (h.listen(port)) {
     std::cout << "Listening to port " << port << std::endl;
-  }
-  else
-  {
+  } else {
     std::cerr << "Failed to listen to port" << std::endl;
     return -1;
   }

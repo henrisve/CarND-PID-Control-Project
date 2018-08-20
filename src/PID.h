@@ -18,9 +18,15 @@ public:
   double Kd;
 
   /*
+  * Other
+  */
+  double old_CTE;
+  double total_CTE;
+
+  /*
   * Constructor
   */
-  PID();
+  PID(double Kp_init, double Ki_init, double Kd_init);
 
   /*
   * Destructor.
@@ -32,6 +38,9 @@ public:
   */
   void Init(double Kp, double Ki, double Kd);
 
+
+  double PID::UpdateSteering(double cte);
+  double PID::UpdateThrottle(double cte);
   /*
   * Update the PID error variables given cross track error.
   */
