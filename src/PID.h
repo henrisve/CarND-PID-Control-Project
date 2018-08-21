@@ -39,8 +39,8 @@ public:
   void Init(double Kp, double Ki, double Kd);
 
 
-  double PID::UpdateSteering(double cte);
-  double PID::UpdateThrottle(double cte);
+  double UpdateSteering(double cte);
+  double UpdateThrottle(double speed, double maxspeed, double steer);
   /*
   * Update the PID error variables given cross track error.
   */

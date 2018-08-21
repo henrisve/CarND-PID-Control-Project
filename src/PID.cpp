@@ -12,7 +12,7 @@ PID::PID(double Kp_init, double Ki_init, double Kd_init) {
     Ki=Ki_init;
     Kd=Kd_init;
     old_CTE = 0;
-    total_CTE = 0
+    total_CTE = 0;
 }
 
 PID::~PID() {}
@@ -22,14 +22,15 @@ void PID::Init(double Kp, double Ki, double Kd) {
 
 double PID::UpdateSteering(double cte){
     total_CTE += cte;
-    double steer = -Kp * cte - Kd * (cte - old_CTE) - Ki * total_CTE;
+    double steer = -Kp * cte - Kd * ( old_CTE - cte) - Ki * total_CTE;
+    cout << "steer = " << -Kp << "*" << cte << -Kd << "* (" << old_CTE << "-"<<  cte<<")"<< -Ki<< "*"<< total_CTE;
     old_CTE = cte;
     if(steer > 1){
-        steer = 1;
-        cout << "steer larger than 1" << endl;
+        cout << "steer is larger than 1: " << steer << endl;
+        steer = 1; 
     }else if(steer < -1){
-        steer = -1;
-        cout << "steer less than -1" << endl;
+        cout << "steer less than -1 : " << steer << endl;
+        steer = -1; 
     }
     return steer;
 }

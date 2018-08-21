@@ -30,9 +30,9 @@ std::string hasData(std::string s) {
 
 int main(){
   uWS::Hub h;
-  double Kp_init=1;
-  double Ki_init=1;
-  double Kd_init=1;
+  double Kp_init=0.025;
+  double Ki_init=0;
+  double Kd_init=0.5;
   PID pid(Kp_init, Ki_init, Kd_init);
   // TODO: Initialize the pid variable.
 
@@ -51,7 +51,7 @@ int main(){
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
-          double steer_value = pid.UpdateSteering(cte)
+          double steer_value = pid.UpdateSteering(cte);
           /*
           * TODO: Calcuate steering value here, remember the steering value is
           * [-1, 1].
