@@ -1,5 +1,6 @@
 #include "PID.h"
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
@@ -8,11 +9,19 @@ using namespace std;
 */
 
 PID::PID(double Kp_init, double Ki_init, double Kd_init) {
-    Kp=Kp_init;
-    Ki=Ki_init;
-    Kd=Kd_init;
+    kpid = {Kp_init,Ki_init,Kd_init};
+    //kpid = Ki_init;
+    //kpid = Kd_init;
     old_CTE = 0;
     total_CTE = 0;
+    twiddleLoop = 0;
+    twiddleGeneration = 0;
+    twiddleError = 0;
+    twiddleBestError = INFINITY;
+    twiddleDP = {Kp_init/10,Ki_init/10,Kd_init/10};
+    parameterNo=0;
+    twiddleCheckNeg=true;
+    twiddleFromStart=true;
 }
 
 PID::~PID() {}
@@ -22,14 +31,15 @@ void PID::Init(double Kp, double Ki, double Kd) {
 
 double PID::UpdateSteering(double cte){
     total_CTE += cte;
-    double steer = -Kp * cte - Kd * ( old_CTE - cte) - Ki * total_CTE;
-    cout << "steer = " << -Kp << "*" << cte << -Kd << "* (" << old_CTE << "-"<<  cte<<")"<< -Ki<< "*"<< total_CTE;
+
+    double steer = -kpid[0] * cte - kpid[2] * ( cte - old_CTE) - kpid[1] * total_CTE;
+    //cout << "steer = " << -kpid[0] << "*" << cte << -kpid[2] << "* (" << old_CTE << "-"<<  cte<<")"<< -kpid[1]<< "*"<< total_CTE;
     old_CTE = cte;
     if(steer > 1){
-        cout << "steer is larger than 1: " << steer << endl;
+        //cout << "steer is larger than 1: " << steer << endl;
         steer = 1; 
     }else if(steer < -1){
-        cout << "steer less than -1 : " << steer << endl;
+        //cout << "steer less than -1 : " << steer << endl;
         steer = -1; 
     }
     return steer;
@@ -39,6 +49,92 @@ double PID::UpdateThrottle(double speed, double maxspeed, double steer){
     //Todo, pid for speed
     double speed_diff = maxspeed*(1-(steer*0.5)) - speed;
     return 1;
+}
+
+bool PID::twiddle(double cte){ 
+    if(twiddleFromStart && twiddleLoop<200){ // we get lots of error during the first seconds
+        twiddleLoop++;
+        return false;
+    }else if(twiddleFromStart){
+        cout << "started looking" << endl;
+        twiddleError=0;
+        twiddleLoop=0;
+        twiddleFromStart=false;
+    }
+    twiddleError+=fabs(cte);
+    int runTime=1000;
+    bool reset = false;    
+    if(twiddleError > twiddleBestError){
+        cout << "error too high" ;
+        //twiddleError= (runTime/twiddleLoop)*2*twiddleError;
+        twiddleLoop = runTime;
+    }else if(cte > 2.5 && twiddleLoop > 10){
+        cout << "car too far from track: ";
+        twiddleError= (runTime/twiddleLoop)*2*twiddleError;
+        twiddleLoop = runTime;
+        reset = true;
+    }  
+
+    if(twiddleLoop >= runTime){
+        //Only do first time!
+        cout << "error:" << twiddleError << " , best is " << twiddleBestError << endl;
+        if(twiddleGeneration==0){
+            cout << "first time" << endl;
+            twiddleBestError=twiddleError;
+            kpid[0] += twiddleDP[0];
+            twiddleLoop=0;
+            if(reset){
+                old_CTE = 0;
+                total_CTE = 0;
+                twiddleFromStart=true;
+            }
+            twiddleGeneration++;
+            twiddleError=0;
+            return reset;
+        }
+        if(twiddleError < twiddleBestError){
+            cout << "new best:" << twiddleError << endl;
+            twiddleBestError=twiddleError;
+            twiddleDP[parameterNo] *= 1.1;
+            parameterNo = (parameterNo+1) % kpid.size();
+            kpid[parameterNo] += twiddleDP[parameterNo];
+            twiddleCheckNeg = true;
+            cout << "next parameterno " << parameterNo  << endl;
+        }else{
+            if(twiddleCheckNeg){
+                cout << "not better, try negative may" << endl;
+                kpid[parameterNo] -= 2*twiddleDP[parameterNo];
+                twiddleCheckNeg = false;
+            }else{
+                cout << "still not better, set back and try lower dp ";
+                kpid[parameterNo] += twiddleDP[parameterNo];  
+                twiddleDP[parameterNo] *= 0.9;    
+                parameterNo = (parameterNo+1) % kpid.size();
+                kpid[parameterNo] += twiddleDP[parameterNo];
+                twiddleCheckNeg = true;
+                cout << "next parameter no " << parameterNo  << endl;
+            }
+            
+        }
+        if(twiddleError > twiddleBestError*1.1)
+            reset = true;
+        // Do a reset
+        twiddleLoop=0;
+        twiddleGeneration++;
+        twiddleError=0;
+        cout <<  kpid[0] << "  "  << kpid[1] << "  "  << kpid[2] << "  " << endl;
+        cout << twiddleDP[0] << "  " << twiddleDP[1] << "  " << twiddleDP[2] << "  " << endl;
+        if(reset){
+            old_CTE = 0;
+            total_CTE = 0;
+            twiddleFromStart=true;
+        }
+        return reset;
+    }else{
+        twiddleLoop++;
+        return false; 
+    }
+
 }
 
 void PID::UpdateError(double cte) {

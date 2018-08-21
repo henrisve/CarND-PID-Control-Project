@@ -1,7 +1,8 @@
 #ifndef PID_H
 #define PID_H
-
+#include <vector>
 class PID {
+  
 public:
   /*
   * Errors
@@ -13,15 +14,25 @@ public:
   /*
   * Coefficients
   */ 
-  double Kp;
-  double Ki;
-  double Kd;
+  //double Kp;
+  //double Ki;
+  //double Kd;
+  std::vector<double> kpid;
+  
 
   /*
   * Other
   */
   double old_CTE;
   double total_CTE;
+  int twiddleLoop;
+  std::vector<double> twiddleDP;
+  double twiddleError;
+  int twiddleGeneration;
+  double twiddleBestError;
+  int parameterNo;
+  bool twiddleCheckNeg;
+  bool twiddleFromStart;
 
   /*
   * Constructor
@@ -41,6 +52,7 @@ public:
 
   double UpdateSteering(double cte);
   double UpdateThrottle(double speed, double maxspeed, double steer);
+  bool twiddle(double cte);
   /*
   * Update the PID error variables given cross track error.
   */
