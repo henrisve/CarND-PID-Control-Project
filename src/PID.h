@@ -33,6 +33,7 @@ public:
   int parameterNo;
   bool twiddleCheckNeg;
   bool twiddleFromStart;
+  int twiddleRuntime;
 
   /*
   * Constructor

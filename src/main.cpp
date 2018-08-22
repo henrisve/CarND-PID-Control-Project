@@ -30,8 +30,8 @@ std::string hasData(std::string s) {
 
 int main(){
   uWS::Hub h;
-  double Kp_init=0.13;
-  double Ki_init=0.00001;
+  double Kp_init=0.12;
+  double Ki_init=0.000001;
   double Kd_init=3.0;
   PID pid(Kp_init, Ki_init, Kd_init);
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {

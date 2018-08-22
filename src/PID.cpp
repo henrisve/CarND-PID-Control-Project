@@ -22,6 +22,7 @@ PID::PID(double Kp_init, double Ki_init, double Kd_init) {
     parameterNo=0;
     twiddleCheckNeg=true;
     twiddleFromStart=true;
+    twiddleRuntime=1200;
 }
 
 PID::~PID() {}
@@ -52,7 +53,7 @@ double PID::UpdateThrottle(double speed, double maxspeed, double steer){
 }
 
 bool PID::twiddle(double cte){ 
-    if(twiddleFromStart && twiddleLoop<200){ // we get lots of error during the first seconds
+    if(twiddleFromStart && twiddleLoop<400){ // we get lots of error during the first seconds
         twiddleLoop++;
         return false;
     }else if(twiddleFromStart){
@@ -61,24 +62,29 @@ bool PID::twiddle(double cte){
         twiddleLoop=0;
         twiddleFromStart=false;
     }
-    twiddleError+=fabs(cte);
-    int runTime=1000;
+    twiddleError+=(fabs(cte)*fabs(cte))/twiddleRuntime;
+    
     bool reset = false;    
     if(twiddleError > twiddleBestError){
-        cout << "error too high" ;
+        cout << "error too high " ;
         //twiddleError= (runTime/twiddleLoop)*2*twiddleError;
-        twiddleLoop = runTime;
-    }else if(cte > 2.5 && twiddleLoop > 10){
-        cout << "car too far from track: ";
-        twiddleError= (runTime/twiddleLoop)*2*twiddleError;
-        twiddleLoop = runTime;
-        reset = true;
-    }  
-
-    if(twiddleLoop >= runTime){
-        //Only do first time!
+        twiddleLoop = twiddleRuntime;
+        if(cte > 3 && twiddleLoop > 10){ 
+    //<----- this if was outside earlier, but the hard turn after
+            // the bridge seems to return waay to high values
+            // wheels on the side on other parts is about 1.5, where
+            // at that point its closer to 3-4
+            cout << "and car too far from track: ";
+            twiddleError= (twiddleRuntime/twiddleLoop)*2*twiddleError;
+            twiddleLoop = twiddleRuntime;
+            reset = true;
+        }  
+    }
+    
+    if(twiddleLoop >= twiddleRuntime){
+        //will run less and less over time
         cout << "error:" << twiddleError << " , best is " << twiddleBestError << endl;
-        if(twiddleGeneration==0){
+        if(twiddleGeneration==0){//Only do first time!
             cout << "first time" << endl;
             twiddleBestError=twiddleError;
             kpid[0] += twiddleDP[0];
@@ -92,27 +98,27 @@ bool PID::twiddle(double cte){
             twiddleError=0;
             return reset;
         }
-        if(twiddleError < twiddleBestError){
+        if(twiddleError< twiddleBestError){
             cout << "new best:" << twiddleError << endl;
             twiddleBestError=twiddleError;
             twiddleDP[parameterNo] *= 1.1;
             parameterNo = (parameterNo+1) % kpid.size();
             kpid[parameterNo] += twiddleDP[parameterNo];
             twiddleCheckNeg = true;
-            cout << "next parameterno " << parameterNo  << endl;
+            cout << "next parameter #: " << parameterNo  << endl;
         }else{
             if(twiddleCheckNeg){
                 cout << "not better, try negative may" << endl;
                 kpid[parameterNo] -= 2*twiddleDP[parameterNo];
                 twiddleCheckNeg = false;
             }else{
-                cout << "still not better, set back and try lower dp ";
+                cout << "still not better, reset and try lower dp ";
                 kpid[parameterNo] += twiddleDP[parameterNo];  
                 twiddleDP[parameterNo] *= 0.9;    
                 parameterNo = (parameterNo+1) % kpid.size();
                 kpid[parameterNo] += twiddleDP[parameterNo];
                 twiddleCheckNeg = true;
-                cout << "next parameter no " << parameterNo  << endl;
+                cout << ", next parameter #:" << parameterNo  << endl;
             }
             
         }
@@ -121,9 +127,10 @@ bool PID::twiddle(double cte){
         // Do a reset
         twiddleLoop=0;
         twiddleGeneration++;
+        twiddleRuntime=twiddleRuntime+twiddleGeneration*10;
         twiddleError=0;
-        cout <<  kpid[0] << "  "  << kpid[1] << "  "  << kpid[2] << "  " << endl;
-        cout << twiddleDP[0] << "  " << twiddleDP[1] << "  " << twiddleDP[2] << "  " << endl;
+        cout << "current PID: " <<kpid[0] << " \t"  << kpid[1] << " \t"  << kpid[2] << " \t" << endl;
+        cout << "current DP : " twiddleDP[0] << " \t" << twiddleDP[1] << " \t" << twiddleDP[2] << " \t" << endl;
         if(reset){
             old_CTE = 0;
             total_CTE = 0;
