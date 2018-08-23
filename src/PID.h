@@ -30,17 +30,20 @@ public:
   double twiddleError;
   int twiddleGeneration;
   double twiddleBestError;
+  double twiddleBestSpeedError;
   int parameterNo;
   bool twiddleCheckNeg;
   bool twiddleFromStart;
+  bool twiddleWait;
   int twiddleRuntime;
   double avrageSpeed;
   double cteError;
+  int twiddleGenrationSinceBetter;
   /*
   * Constructor
   */
 PID(double Kp_init, double Ki_init, double Kd_init,
-    double Kp_init_s, double Ki_init_s, double Kd_init_s);
+    double Kp_init_s, double Kd_init_s, double Kt_init_s);
 
   /*
   * Destructor.
@@ -50,6 +53,7 @@ PID(double Kp_init, double Ki_init, double Kd_init,
   double UpdateSteering(double cte);
   double UpdateThrottle(double cte, double speed);
   bool twiddle(double cte, double speed);
+  void reset_twiddle(bool reset_car);
 
 };
 
