@@ -52,7 +52,7 @@ PID(double Kp_init, double Ki_init, double Kd_init,
 
   double UpdateSteering(double cte);
   double UpdateThrottle(double cte, double speed);
-  bool twiddle(double cte, double speed);
+  bool twiddle(double cte, double speed, double throttle);
   void reset_twiddle(bool reset_car);
 
 };

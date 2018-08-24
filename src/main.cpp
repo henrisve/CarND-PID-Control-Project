@@ -30,12 +30,12 @@ std::string hasData(std::string s) {
 
 int main(){
   uWS::Hub h;
-  double Kp_init=0.1438;
-  double Ki_init=0.000001;
-  double Kd_init=3.8357;
-  double Kp_throttle_init=0.2122;
-  double Kd_throttle_init=0.01197;
-  double max_throttle_init=0.55;
+  double Kp_init=0.2;
+  double Ki_init=0.0001;
+  double Kd_init=5.04;
+  double Kp_throttle_init=0.4004;
+  double Kd_throttle_init=0.011;
+  double max_throttle_init=0.65; // can be at 0.85, but less stable
   
   PID pid(Kp_init, Ki_init, Kd_init,Kp_throttle_init,Kd_throttle_init,max_throttle_init);
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -57,7 +57,7 @@ int main(){
           double steer_value = pid.UpdateSteering(cte);
           double throttle_value = pid.UpdateThrottle(cte,speed);
           //std::cout << "throttle: " << throttle_value << std::endl;
-          bool reset = pid.twiddle(cte,speed);
+          bool reset = pid.twiddle(cte,speed,throttle_value);
           // DEBUG
           //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
 
