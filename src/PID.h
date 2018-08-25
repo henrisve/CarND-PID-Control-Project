@@ -18,51 +18,43 @@ public:
   //double Ki;
   //double Kd;
   std::vector<double> kpid;
-  
-
-  /*
-  * Other
-  */
   double old_CTE;
   double total_CTE;
+
+  /*
+  * twiddle
+  */
+
   int twiddleLoop;
   std::vector<double> twiddleDP;
   double twiddleError;
   int twiddleGeneration;
   double twiddleBestError;
+  double twiddleBestSpeedError;
   int parameterNo;
   bool twiddleCheckNeg;
   bool twiddleFromStart;
+  bool twiddleWait;
   int twiddleRuntime;
-
+  double avrageSpeed;
+  double cteError;
+  int twiddleGenrationSinceBetter;
   /*
   * Constructor
   */
-  PID(double Kp_init, double Ki_init, double Kd_init);
+PID(double Kp_init, double Ki_init, double Kd_init,
+    double Kp_init_s, double Kd_init_s, double Kt_init_s);
 
   /*
   * Destructor.
   */
   virtual ~PID();
 
-  /*
-  * Initialize PID.
-  */
-  void Init(double Kp, double Ki, double Kd);
-
-
   double UpdateSteering(double cte);
-  double UpdateThrottle(double speed, double maxspeed, double steer);
-  bool twiddle(double cte);
-  /*
-  * Update the PID error variables given cross track error.
-  */
-  void UpdateError(double cte);
+  double UpdateThrottle(double cte, double speed);
+  bool twiddle(double cte, double speed, double throttle);
+  void reset_twiddle(bool reset_car);
 
-  /*
-  * Calculate the total PID error.
-  */
-  double TotalError();
 };
 
 #endif /* PID_H */
