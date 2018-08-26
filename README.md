@@ -1,4 +1,30 @@
-# CarND-Controls-PID
+#Udacity PID project
+The purpose of this project as to create a PID control that would steer a simulated car. 
+
+The PID consist of 3 different parts.
+
+1. **P**roportional,
+This part is what actually do most of the work, it simply takes the error, multiply it with a constant and feed that directly into the system. One problem with this is that it's very likely to overshoot.
+2. **I**ntegral,
+This part will help to drag down the error if it stays there during a longer time by taking the sum of all error. This is slower to react but can be stronger. 
+3. **d**erivate,
+This part will help minimizing the overshoot caused by the **P** term, it does this by taking the difference between the current and previous error.
+
+
+Appart from only doing the steering I also added in a PD control for the throttle, this will further help stabilize the car by slowing down in curves. for this I used the absolute value of the *Cross Track Error* (CTE).
+
+When it comes to tuning the parameters there's many ways of doing it, one method that's not too bad is to just manually tune it. it goes pretty well and quick to get a pretty good result.
+
+Another method mentioned in the class was to use *Twiddle*. It simply tries different values to see if it's better or not. This takes a long time in system like this.
+One of the best ways would probably be to always start from beginning and then run one lap and get the score. However that would take a long time, so instead I let it run continuously around the track and only reset if the car get stuck or outside the track.
+
+In the first version I made I only tuned the steering with the twiddle, that was pretty straight forward and simple, however when adding in the throttle pd controller it became a bit trickier, this due I also added speed into the error, so that the car would favor going a bit faster, otherwise the car would likely tune itself to always go slow. 
+
+
+
+
+
+# Instructions etc, (original readme)
 Self-Driving Car Engineer Nanodegree Program
 
 ---
